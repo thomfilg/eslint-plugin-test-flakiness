@@ -80,6 +80,28 @@ ruleTester.run('no-test-focus', rule, {
       code: 'normalTest("should work", () => {});',
       options: [{ customSkipPatterns: ['skipThisTest'] }],
       filename: 'test.spec.js'
+    },
+    // Conditional skip driven by a runtime expression is allowed only when the
+    // consumer opts in via allowConditionalSkip
+    {
+      code: 'test.skip(isDeployedEnv, \'reason\');',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }]
+    },
+    {
+      code: 'test.skip(process.env.CI === \'true\');',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }]
+    },
+    {
+      code: 'test.skip(!supportsFeature);',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }]
+    },
+    {
+      code: 'test.skip(getFlag());',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }]
     }
   ],
 
@@ -306,6 +328,67 @@ ruleTester.run('no-test-focus', rule, {
       filename: 'test.spec.js',
       errors: [{ messageId: 'noSkippedTest', data: { method: 'anythingSkip' } }],
       output: 'anything("should be skipped", () => {});'
+    },
+    // Unconditional skip — literal / no-arg first argument is not a runtime condition
+    {
+      code: 'test.skip(true);',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    {
+      code: 'test.skip(false);',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    {
+      code: 'test.skip();',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    {
+      code: 'test.skip(\'just a string\');',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    // Declaration form — disabled test/suite is stripped to re-enable it
+    {
+      code: 'it.skip(\'name\', () => {});',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noTestSkip', data: { method: 'it' } }],
+      output: 'it(\'name\', () => {});'
+    },
+    // Constant-folded conditions are still unconditional skips
+    {
+      code: 'const a = true;\nit.skip(a);',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    {
+      code: 'const getCond = () => true;\nit.skip(getCond());',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noUnconditionalSkip' }]
+    },
+    // Conditional skip is blocked by default (no allowConditionalSkip opt-in);
+    // not auto-fixed because stripping .skip would change call semantics
+    {
+      code: 'test.skip(isDeployedEnv, \'reason\');',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noTestSkip', data: { method: 'test' } }]
+    },
+    {
+      code: 'test.skip(process.env.CI === \'true\');',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noTestSkip', data: { method: 'test' } }]
+    },
+    {
+      code: 'test.skip(!supportsFeature);',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noTestSkip', data: { method: 'test' } }]
+    },
+    {
+      code: 'test.skip(getFlag());',
+      filename: 'test.spec.js',
+      errors: [{ messageId: 'noTestSkip', data: { method: 'test' } }]
     }
   ]
 });

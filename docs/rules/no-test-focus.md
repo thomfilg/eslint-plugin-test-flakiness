@@ -56,6 +56,19 @@ describe.skip("skipped suite", () => {
   // All tests in this suite are skipped
 });
 
+// Unconditional .skip - a literal or no argument is not a runtime condition
+test.skip(true);
+test.skip(false);
+test.skip();
+test.skip("just a string");
+
+// Constants masquerading as conditions are still unconditional
+const alwaysSkip = true;
+it.skip(alwaysSkip);
+
+const getFlag = () => true;
+it.skip(getFlag()); // resolves to a constant -> blocked
+
 xit("skipped test", () => {
   // Jasmine skipped test
 });
@@ -104,7 +117,41 @@ if (process.env.RUN_SLOW_TESTS) {
     // Only runs when explicitly enabled
   });
 }
+
+// A conditional skip whose argument is a genuine runtime expression is allowed
+// ONLY when you opt in with `allowConditionalSkip: true` (see below)
+test.skip(isDeployedEnv, "only relevant in deployed environments");
+test.skip(process.env.CI === "true");
+test.skip(!supportsFeature);
+test.skip(getFlag()); // unknown function -> treated as a runtime condition
 ```
+
+## Conditional skip (opt-in)
+
+By default **every** `.skip` is blocked. If you set `allowConditionalSkip: true`,
+the rule allows one exception: a conditional skip whose first argument is a
+runtime expression — a variable, property access, comparison, negation, or call
+that is resolved at run time:
+
+```javascript
+// Allowed ONLY with { "allowConditionalSkip": true } - the skip decision is made at runtime
+test.skip(isDeployedEnv, "reason");
+test.skip(process.env.CI === "true");
+test.skip(!supportsFeature);
+```
+
+Everything else is always blocked because it unconditionally disables the test:
+
+- `test.skip(true)` / `test.skip(false)` — a literal is not a condition
+- `test.skip()` — no argument at all
+- `test.skip("just a string")` — a literal first argument
+- `test.skip("name", () => {})` / `it.skip(...)` / `describe.skip(...)` — a
+  declared-disabled test or suite
+- A first argument that statically resolves to a constant (e.g. `const a = true;
+it.skip(a)` or `const getCond = () => true; it.skip(getCond())`)
+
+To remove a declared-disabled test, drop the `.skip` (the auto-fix does this) or
+replace it with a real runtime condition.
 
 ## Options
 
@@ -114,6 +161,7 @@ if (process.env.RUN_SLOW_TESTS) {
     "error",
     {
       "allowSkip": false,
+      "allowConditionalSkip": false,
       "allowOnly": false,
       "customFocusPatterns": [],
       "customSkipPatterns": []
@@ -122,7 +170,10 @@ if (process.env.RUN_SLOW_TESTS) {
 }
 ```
 
-- `allowSkip` (default: `false`): Allow skip methods like `test.skip`, `xit`
+- `allowSkip` (default: `false`): Allow all skip methods like `test.skip`, `xit`
+- `allowConditionalSkip` (default: `false`): Allow a conditional skip whose first argument is a runtime expression
+  (e.g. `test.skip(isDeployedEnv, reason)`). When `false`, every `.skip` is blocked. Has no additional effect when
+  `allowSkip` is `true`
 - `allowOnly` (default: `false`): Allow only/focus methods like `test.only`, `fit`
 - `customFocusPatterns`: Array of additional function names to treat as focused tests (supports wildcards with `*`)
 - `customSkipPatterns`: Array of additional function names to treat as skipped tests (supports wildcards with `*`)
@@ -177,7 +228,9 @@ This rule detects focused/skipped tests in various formats:
 
 This rule provides comprehensive auto-fix support:
 
-- Removes `.only` and `.skip` modifiers (including bracket notation like `test['only']`)
+- Removes `.only` modifiers (including bracket notation like `test['only']`)
+- Removes `.skip` modifiers for the declaration form (`test.skip('name', fn)`); an unconditional `test.skip(true)` /
+  `test.skip()` is reported without an auto-fix so the removal stays a manual decision
 - Converts `fit` → `it`, `fdescribe` → `describe`
 - Converts `xit` → `it`, `xdescribe` → `describe`
 - Removes `.todo` modifier
