@@ -138,4 +138,9 @@ jobs:
       # Requires a one-time Trusted Publisher config on npmjs.com (see README/repo notes).
       - name: Publish to npm (OIDC, tokenless)
         if: steps.semantic_release.outputs.new-release-published == 'true'
-        run: npm publish --provenance --access public
+        run: |
+          # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` into the npmrc it
+          # manages (NPM_CONFIG_USERCONFIG); with no token that empty value shadows OIDC.
+          # Remove it so npm uses the GitHub OIDC id-token for trusted publishing.
+          npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
+          npm publish --provenance --access public
