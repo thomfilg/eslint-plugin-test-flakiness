@@ -121,10 +121,26 @@ jobs:
         run: pnpm run test:ci
 
       - name: Run semantic-release
+        id: semantic_release
         if: steps.code-changes.outputs.has_code_changes == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           HUSKY: 0
         run: pnpm run semantic-release
+
+      # npm Trusted Publishing (OIDC) needs npm >= 11.5.1; Node 22 ships an older npm.
+      - name: Upgrade npm for OIDC trusted publishing
+        if: steps.semantic_release.outputs.new-release-published == 'true'
+        run: npm install -g npm@latest
+
+      # Tokenless publish: npm exchanges the GitHub OIDC id-token (id-token: write,
+      # already granted above) for a short-lived, single-use credential. No NPM_TOKEN.
+      # Requires a one-time Trusted Publisher config on npmjs.com (see README/repo notes).
+      - name: Publish to npm (OIDC, tokenless)
+        if: steps.semantic_release.outputs.new-release-published == 'true'
+        run: |
+          # actions/setup-node writes `_authToken=${NODE_AUTH_TOKEN}` into the npmrc it
+          # manages (NPM_CONFIG_USERCONFIG); with no token that empty value shadows OIDC.
+          # Remove it so npm uses the GitHub OIDC id-token for trusted publishing.
+          npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
+          npm publish --provenance --access public
