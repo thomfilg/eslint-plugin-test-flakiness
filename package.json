@@ -17,7 +17,7 @@
     "playwright",
     "testing-library"
   ],
-  "author": "Thompson Filgueiras <tigredonorte@users.noreply.github.com>",
+  "author": "Thompson Filgueiras <thomfilg@users.noreply.github.com>",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
@@ -100,15 +100,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tigredonorte/eslint-plugin-test-flakiness.git"
+    "url": "git+https://github.com/thomfilg/eslint-plugin-test-flakiness.git"
   },
   "bugs": {
-    "url": "https://github.com/tigredonorte/eslint-plugin-test-flakiness/issues"
+    "url": "https://github.com/thomfilg/eslint-plugin-test-flakiness/issues"
   },
-  "homepage": "https://github.com/tigredonorte/eslint-plugin-test-flakiness#readme",
+  "homepage": "https://github.com/thomfilg/eslint-plugin-test-flakiness#readme",
   "funding": {
     "type": "github",
-    "url": "https://github.com/sponsors/tigredonorte"
+    "url": "https://github.com/sponsors/thomfilg"
   },
   "config": {
     "commitizen": {
