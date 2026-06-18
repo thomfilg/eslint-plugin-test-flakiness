@@ -368,6 +368,25 @@ ruleTester.run('no-test-focus', rule, {
       filename: 'test.spec.js',
       errors: [{ messageId: 'noUnconditionalSkip' }]
     },
+    // Compile-time-constant expressions are unconditional even with the opt-in
+    {
+      code: 'test.skip(true && false);',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }],
+      errors: [{ messageId: 'noUnconditionalSkip', data: { method: 'test' } }]
+    },
+    {
+      code: 'test.skip(1 === 1);',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }],
+      errors: [{ messageId: 'noUnconditionalSkip', data: { method: 'test' } }]
+    },
+    {
+      code: 'test.skip(true ? false : true);',
+      filename: 'test.spec.js',
+      options: [{ allowConditionalSkip: true }],
+      errors: [{ messageId: 'noUnconditionalSkip', data: { method: 'test' } }]
+    },
     // Conditional skip is blocked by default (no allowConditionalSkip opt-in);
     // not auto-fixed because stripping .skip would change call semantics
     {
