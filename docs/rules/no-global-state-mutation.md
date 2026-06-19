@@ -334,6 +334,34 @@ test("should work with storage", async ({ page }) => {
 });
 ```
 
+#### Browser-context callbacks are exempt
+
+Callbacks passed to `page.evaluate`, `page.addInitScript`, and
+`page.evaluateHandle` run in the **browser context**, not in the Node test
+process. Global-state mutations inside them (e.g. `localStorage` cleanup) are
+isolated browser-side operations, not Node-side global-state leaks, so the rule
+does **not** flag them — no `eslint-disable` comment is needed:
+
+```javascript
+// ✅ Not flagged — runs in the browser, not Node
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("my-persist-key");
+  });
+});
+
+// ✅ Also not flagged — page.evaluate / page.evaluateHandle callbacks
+await page.evaluate(() => {
+  localStorage.clear();
+  delete window.__APP_STATE__;
+});
+```
+
+> **Note (Cypress):** the `cy.window().then((win) => win.localStorage...)`
+> form is out of scope — it mutates `win.localStorage` (a member-object
+> reference), not the bare `localStorage` global, so the rule already does not
+> flag it.
+
 ## Common Global Objects to Avoid Mutating
 
 ### Process Environment

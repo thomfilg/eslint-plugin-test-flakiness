@@ -1408,5 +1408,25 @@ describe('helpers', () => {
       expect(() => helpers.isInsideBrowserContext(node)).not.toThrow();
       expect(helpers.isInsideBrowserContext(node)).toBe(false);
     });
+
+    it('returns false (does not throw) when a CallExpression ancestor callee is null', () => {
+      const ancestor = { type: 'CallExpression', callee: null, parent: null };
+      const node = { type: 'Literal', parent: ancestor };
+
+      expect(() => helpers.isInsideBrowserContext(node)).not.toThrow();
+      expect(helpers.isInsideBrowserContext(node)).toBe(false);
+    });
+
+    it('returns false (does not throw) when a MemberExpression callee has a null property', () => {
+      const ancestor = {
+        type: 'CallExpression',
+        callee: { type: 'MemberExpression', object: { type: 'Identifier', name: 'page' }, property: null },
+        parent: null
+      };
+      const node = { type: 'Literal', parent: ancestor };
+
+      expect(() => helpers.isInsideBrowserContext(node)).not.toThrow();
+      expect(helpers.isInsideBrowserContext(node)).toBe(false);
+    });
   });
 });
