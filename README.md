@@ -217,6 +217,7 @@ Rules that frequently cause test failures in CI/CD environments.
 | [`no-immediate-assertions`](docs/rules/no-immediate-assertions.md) | Assertions immediately after state changes miss async updates                        |    ✅    | Wraps assertion in `waitFor` with appropriate timeout                                  |
 | [`no-unconditional-wait`](docs/rules/no-unconditional-wait.md)     | Fixed delays don't guarantee operations complete                                     |    ✅    | Replaces with `waitFor` condition check when assertion follows; suggests fix otherwise |
 | [`no-promise-race`](docs/rules/no-promise-race.md)                 | Promise.race can produce unpredictable test results                                  |    ❌    | No auto-fix (requires manual refactoring)                                              |
+| [`no-cached-api-wait`](docs/rules/no-cached-api-wait.md)           | Waiting on cached GET responses is an unreliable signal vs. the rendered UI          |    ❌    | No auto-fix (assert on the visible UI outcome instead)                                 |
 
 ### Medium Risk
 
@@ -405,6 +406,7 @@ The plugin uses AST (Abstract Syntax Tree) analysis to detect patterns that comm
 | `no-immediate-assertions`  |  ✅  |   ✅   |       ✅        |     ✅     |   ✅    |         ✅         |
 | `no-unconditional-wait`    |  ✅  |   ✅   |       ✅        |     ✅     |   ✅    |         ✅         |
 | `no-promise-race`          |  ✅  |   ✅   |       ✅        |     ✅     |   ✅    |         ✅         |
+| `no-cached-api-wait`       |  -   |   -    |        -        |     ✅     |   ✅    |         -          |
 | `no-index-queries`         |  -   |   -    |       ✅        |     ✅     |   ✅    |         ✅         |
 | `no-animation-wait`        |  -   |   -    |       ✅        |     ✅     |   ✅    |         -          |
 | `no-global-state-mutation` |  ✅  |   ✅   |       ✅        |     ✅     |   ✅    |         ✅         |
