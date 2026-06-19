@@ -362,6 +362,17 @@ await page.evaluate(() => {
 > reference), not the bare `localStorage` global, so the rule already does not
 > flag it.
 
+**Limitations of the exemption:**
+
+- Only **inline** callbacks are exempt. A reference passed by name —
+  `page.addInitScript(myNamedFn)` where `myNamedFn` mutates storage — is still
+  flagged, because the rule cannot follow the reference to its body.
+- The exemption keys off the callback method **name**
+  (`evaluate`/`addInitScript`/`evaluateHandle`), not the receiver object, so any
+  unrelated `.evaluate(fn)` (e.g. mathjs `math.evaluate(...)`) is also exempted.
+  This is a deliberate trade-off that keeps all Playwright receivers
+  (`page`/`frame`/`locator`/`elementHandle`) working without hard-coding `page`.
+
 ## Common Global Objects to Avoid Mutating
 
 ### Process Environment

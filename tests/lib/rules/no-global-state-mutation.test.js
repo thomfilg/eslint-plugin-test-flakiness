@@ -150,6 +150,13 @@ ruleTester.run('no-global-state-mutation', rule, {
       code: 'page.evaluateHandle(async function () { delete window.foo; })',
       filename: 'EvaluateHandleAsyncFn.test.js'
     },
+    // Bare global-variable creation inside a browser callback is a BROWSER global,
+    // not a Node one — must be exempt too (covers the checkGlobalVariableDeclaration
+    // path, which the AssignmentExpression visitor also runs).
+    {
+      code: 'page.evaluate(() => { someGlobal = 5; })',
+      filename: 'EvaluateBareGlobalAssign.test.js'
+    },
     // G9 — localStorage mutation inside beforeEach follows existing hook behavior
     // (storage method calls in beforeEach/afterEach are exempt — unchanged by this task)
     {
