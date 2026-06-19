@@ -33,7 +33,9 @@ function lint(code) {
         {
           plugins: { 'test-flakiness': { rules: { 'no-global-state-mutation': rule } } },
           languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
-          rules: { [RULE_ID]: 'error' },
+          // Use the recommended config's own severity so this mirrors consumer
+          // behavior even if the recommended severity changes.
+          rules: { [RULE_ID]: severity },
         },
       ],
       'tests/e2e/example.spec.js'

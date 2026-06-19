@@ -1340,44 +1340,84 @@ describe('helpers', () => {
   });
 
   describe('isInsideBrowserContext', () => {
-    // Build a CallExpression ancestor whose callee is a MemberExpression
-    // with the given property name, e.g. page.evaluate(...).
-    function browserCallAncestor(propertyName) {
-      return {
+    // Build `page.<propertyName>(callback)` where `callback` is the browser-side
+    // function argument; returns the call + its callback so tests can nest a node
+    // inside the callback (browser-side) or beside it (Node-side sibling args).
+    function browserCall(propertyName, calleeType = 'ArrowFunctionExpression') {
+      const callback = { type: calleeType, parent: null };
+      const call = {
         type: 'CallExpression',
         callee: {
           type: 'MemberExpression',
           object: { type: 'Identifier', name: 'page' },
           property: { type: 'Identifier', name: propertyName }
         },
+        arguments: [callback],
         parent: null
       };
+      callback.parent = call;
+      return { call, callback };
     }
 
     it.each(['evaluate', 'addInitScript', 'evaluateHandle'])(
-      'returns true when an ancestor is a %s browser-context call',
+      'returns true when the node is inside a %s browser-context callback',
       (propertyName) => {
-        const ancestor = browserCallAncestor(propertyName);
-        const node = { type: 'Literal', parent: ancestor };
+        const { callback } = browserCall(propertyName);
+        const node = { type: 'Literal', parent: callback };
 
         expect(helpers.isInsideBrowserContext(node)).toBe(true);
       }
     );
 
+    it('returns true for a function-expression callback', () => {
+      const { callback } = browserCall('addInitScript', 'FunctionExpression');
+      const node = { type: 'Literal', parent: callback };
+
+      expect(helpers.isInsideBrowserContext(node)).toBe(true);
+    });
+
     it('returns true when the browser-context call is a distant ancestor', () => {
-      const ancestor = browserCallAncestor('evaluate');
+      const { callback } = browserCall('evaluate');
       const node = {
         type: 'Literal',
         parent: {
           type: 'BlockStatement',
-          parent: {
-            type: 'ArrowFunctionExpression',
-            parent: ancestor
-          }
+          parent: callback
         }
       };
 
       expect(helpers.isInsideBrowserContext(node)).toBe(true);
+    });
+
+    it('returns false for a sibling (non-callback) argument evaluated in Node', () => {
+      // page.evaluate(() => {}, localStorage.clear()) — the second argument runs
+      // in Node before serialization, so it must NOT be exempted.
+      const callback = { type: 'ArrowFunctionExpression', parent: null };
+      const siblingArg = {
+        type: 'CallExpression',
+        callee: {
+          type: 'MemberExpression',
+          object: { type: 'Identifier', name: 'localStorage' },
+          property: { type: 'Identifier', name: 'clear' }
+        },
+        arguments: [],
+        parent: null
+      };
+      const call = {
+        type: 'CallExpression',
+        callee: {
+          type: 'MemberExpression',
+          object: { type: 'Identifier', name: 'page' },
+          property: { type: 'Identifier', name: 'evaluate' }
+        },
+        arguments: [callback, siblingArg],
+        parent: null
+      };
+      callback.parent = call;
+      siblingArg.parent = call;
+      const node = { type: 'Literal', parent: siblingArg };
+
+      expect(helpers.isInsideBrowserContext(node)).toBe(false);
     });
 
     it('returns false when no browser-context call exists in the ancestor chain', () => {

@@ -521,6 +521,17 @@ ruleTester.run('no-global-state-mutation', rule, {
         messageId: 'needsCleanup',
         data: { storage: 'localStorage' }
       }]
+    },
+
+    // Sibling (non-callback) argument to page.evaluate runs in Node before
+    // serialization, so it must still be reported (not exempted by the guard).
+    {
+      code: 'test("t", () => { page.evaluate(() => {}, localStorage.clear()); })',
+      filename: 'SiblingArg.test.js',
+      errors: [{
+        messageId: 'needsCleanup',
+        data: { storage: 'localStorage' }
+      }]
     }
   ]
 });
