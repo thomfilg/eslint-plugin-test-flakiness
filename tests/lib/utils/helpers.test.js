@@ -1338,4 +1338,75 @@ describe('helpers', () => {
       expect(helpers.isDataUrl('example.txt')).toBe(false);
     });
   });
+
+  describe('isInsideBrowserContext', () => {
+    // Build a CallExpression ancestor whose callee is a MemberExpression
+    // with the given property name, e.g. page.evaluate(...).
+    function browserCallAncestor(propertyName) {
+      return {
+        type: 'CallExpression',
+        callee: {
+          type: 'MemberExpression',
+          object: { type: 'Identifier', name: 'page' },
+          property: { type: 'Identifier', name: propertyName }
+        },
+        parent: null
+      };
+    }
+
+    it.each(['evaluate', 'addInitScript', 'evaluateHandle'])(
+      'returns true when an ancestor is a %s browser-context call',
+      (propertyName) => {
+        const ancestor = browserCallAncestor(propertyName);
+        const node = { type: 'Literal', parent: ancestor };
+
+        expect(helpers.isInsideBrowserContext(node)).toBe(true);
+      }
+    );
+
+    it('returns true when the browser-context call is a distant ancestor', () => {
+      const ancestor = browserCallAncestor('evaluate');
+      const node = {
+        type: 'Literal',
+        parent: {
+          type: 'BlockStatement',
+          parent: {
+            type: 'ArrowFunctionExpression',
+            parent: ancestor
+          }
+        }
+      };
+
+      expect(helpers.isInsideBrowserContext(node)).toBe(true);
+    });
+
+    it('returns false when no browser-context call exists in the ancestor chain', () => {
+      const node = {
+        type: 'Literal',
+        parent: {
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: { type: 'Identifier', name: 'page' },
+            property: { type: 'Identifier', name: 'click' }
+          },
+          parent: null
+        }
+      };
+
+      expect(helpers.isInsideBrowserContext(node)).toBe(false);
+    });
+
+    it('returns false (does not throw) when a CallExpression ancestor callee is not a MemberExpression', () => {
+      const ancestor = {
+        type: 'CallExpression',
+        callee: { type: 'Identifier', name: 'evaluate' },
+        parent: null
+      };
+      const node = { type: 'Literal', parent: ancestor };
+
+      expect(() => helpers.isInsideBrowserContext(node)).not.toThrow();
+      expect(helpers.isInsideBrowserContext(node)).toBe(false);
+    });
+  });
 });
