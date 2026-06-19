@@ -41,7 +41,7 @@
     "semantic-release": "semantic-release"
   },
   "bin": {
-    "lint-flaky": "./bin/lint-flaky.js"
+    "lint-flaky": "bin/lint-flaky.js"
   },
   "files": [
     "lib/**/*.js",
