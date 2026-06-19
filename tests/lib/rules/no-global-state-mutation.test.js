@@ -104,6 +104,64 @@ ruleTester.run('no-global-state-mutation', rule, {
       code: 'beforeEach(() => { localStorage.clear(); })',
       filename: 'HooksLocalStorage.test.js',
       options: [{ allowInHooks: true }]
+    },
+
+    // Browser-context callbacks are exempt — mutations run in the page, not Node.
+    // G1 — localStorage method call inside page.evaluate not reported
+    {
+      code: 'test("t", async () => { await page.evaluate(() => localStorage.setItem("k", "v")); })',
+      filename: 'EvaluateMethod.test.js'
+    },
+    // G2 — localStorage method call inside page.addInitScript not reported (reproduction snippet)
+    {
+      code: 'page.addInitScript(() => localStorage.removeItem("my-persist-key"))',
+      filename: 'AddInitScriptRepro.test.js'
+    },
+    // G3 — localStorage method call inside page.evaluateHandle not reported
+    {
+      code: 'test("t", async () => { await page.evaluateHandle(() => localStorage.setItem("k", "v")); })',
+      filename: 'EvaluateHandleMethod.test.js'
+    },
+    // G4 — localStorage property assignment inside page.evaluate not reported
+    {
+      code: 'page.evaluate(() => { localStorage.key = "value"; })',
+      filename: 'EvaluateAssignment.test.js'
+    },
+    // G5 — window member assignment inside page.addInitScript not reported
+    {
+      code: 'page.addInitScript(() => { window.testData = "value"; })',
+      filename: 'AddInitScriptAssignment.test.js'
+    },
+    // G6 — delete operation inside page.evaluate not reported
+    {
+      code: 'page.evaluate(() => { delete window.myProperty; })',
+      filename: 'EvaluateDelete.test.js'
+    },
+    // G7 — async arrow + function-expression callbacks both exempted
+    {
+      code: 'page.evaluate(async () => { localStorage.setItem("k", "v"); })',
+      filename: 'EvaluateAsyncArrow.test.js'
+    },
+    {
+      code: 'page.addInitScript(function () { localStorage.removeItem("k"); })',
+      filename: 'AddInitScriptFunctionExpr.test.js'
+    },
+    {
+      code: 'page.evaluateHandle(async function () { delete window.foo; })',
+      filename: 'EvaluateHandleAsyncFn.test.js'
+    },
+    // Bare global-variable creation inside a browser callback is a BROWSER global,
+    // not a Node one — must be exempt too (covers the checkGlobalVariableDeclaration
+    // path, which the AssignmentExpression visitor also runs).
+    {
+      code: 'page.evaluate(() => { someGlobal = 5; })',
+      filename: 'EvaluateBareGlobalAssign.test.js'
+    },
+    // G9 — localStorage mutation inside beforeEach follows existing hook behavior
+    // (storage method calls in beforeEach/afterEach are exempt — unchanged by this task)
+    {
+      code: 'beforeEach(() => { localStorage.setItem("k", "v"); })',
+      filename: 'BeforeEachStorageBehavior.test.js'
     }
   ],
 
@@ -459,6 +517,27 @@ ruleTester.run('no-global-state-mutation', rule, {
       filename: 'GlobalAssignment.test.js',
       errors: [{
         messageId: 'useLocalVariable'
+      }]
+    },
+
+    // G8 — direct Node-side localStorage mutation (not in a browser-context callback) still reported
+    {
+      code: 'test("t", () => { localStorage.removeItem("k"); })',
+      filename: 'NodeSideStorage.test.js',
+      errors: [{
+        messageId: 'needsCleanup',
+        data: { storage: 'localStorage' }
+      }]
+    },
+
+    // Sibling (non-callback) argument to page.evaluate runs in Node before
+    // serialization, so it must still be reported (not exempted by the guard).
+    {
+      code: 'test("t", () => { page.evaluate(() => {}, localStorage.clear()); })',
+      filename: 'SiblingArg.test.js',
+      errors: [{
+        messageId: 'needsCleanup',
+        data: { storage: 'localStorage' }
       }]
     }
   ]

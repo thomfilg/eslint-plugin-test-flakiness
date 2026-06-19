@@ -334,6 +334,45 @@ test("should work with storage", async ({ page }) => {
 });
 ```
 
+#### Browser-context callbacks are exempt
+
+Callbacks passed to `page.evaluate`, `page.addInitScript`, and
+`page.evaluateHandle` run in the **browser context**, not in the Node test
+process. Global-state mutations inside them (e.g. `localStorage` cleanup) are
+isolated browser-side operations, not Node-side global-state leaks, so the rule
+does **not** flag them — no `eslint-disable` comment is needed:
+
+```javascript
+// ✅ Not flagged — runs in the browser, not Node
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("my-persist-key");
+  });
+});
+
+// ✅ Also not flagged — page.evaluate / page.evaluateHandle callbacks
+await page.evaluate(() => {
+  localStorage.clear();
+  delete window.__APP_STATE__;
+});
+```
+
+> **Note (Cypress):** the `cy.window().then((win) => win.localStorage...)`
+> form is out of scope — it mutates `win.localStorage` (a member-object
+> reference), not the bare `localStorage` global, so the rule already does not
+> flag it.
+
+**Limitations of the exemption:**
+
+- Only **inline** callbacks are exempt. A reference passed by name —
+  `page.addInitScript(myNamedFn)` where `myNamedFn` mutates storage — is still
+  flagged, because the rule cannot follow the reference to its body.
+- The exemption keys off the callback method **name**
+  (`evaluate`/`addInitScript`/`evaluateHandle`), not the receiver object, so any
+  unrelated `.evaluate(fn)` (e.g. mathjs `math.evaluate(...)`) is also exempted.
+  This is a deliberate trade-off that keeps all Playwright receivers
+  (`page`/`frame`/`locator`/`elementHandle`) working without hard-coding `page`.
+
 ## Common Global Objects to Avoid Mutating
 
 ### Process Environment
