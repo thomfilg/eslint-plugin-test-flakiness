@@ -6,7 +6,6 @@ module.exports = {
     '!lib/index.js'
   ],
   testMatch: [
-    '**/tests/**/*.test.js',
-    '**/tests/**/*.spec.js'
+    '**/tests/**/*.test.js'
   ]
 };
