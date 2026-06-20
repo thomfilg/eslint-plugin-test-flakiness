@@ -86,6 +86,13 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js'
     },
 
+    // 1.3 — `method` may live in a LATER object argument; a mutation there must
+    // still be honored (not mis-read as implicit GET from an earlier object).
+    {
+      code: 'await waitForApiResponse(\'/api\', { retries: 3 }, { method: \'POST\' })',
+      filename: 'users.test.js'
+    },
+
     // 1.4 — Recommended UI-assertion good pattern (no API wait at all)
     {
       code: 'await page.getByTestId(\'submit\').click(); await page.getByTestId(\'result\').isVisible()',
@@ -145,6 +152,12 @@ ruleTester.run('no-cached-api-wait', rule, {
       code: 'await waitForApiResponse({ [\'method\']: \'GET\', url: \'/api\' })',
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait' }]
+    },
+    // 1.3 — A GET `method` in a LATER object argument is still detected
+    {
+      code: 'await waitForApiResponse(\'/api\', { retries: 3 }, { method: \'GET\' })',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
 
     // 1.4 — Custom helperNames option flags the configured helper name
