@@ -68,6 +68,13 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js'
     },
 
+    // 1.3 — Computed string-literal `method` key is honored like a normal key;
+    // a mutation literal is not flagged.
+    {
+      code: 'await waitForApiResponse({ [\'method\']: \'POST\', url: \'/api\' })',
+      filename: 'users.test.js'
+    },
+
     // 1.4 — Recommended UI-assertion good pattern (no API wait at all)
     {
       code: 'await page.getByTestId(\'submit\').click(); await page.getByTestId(\'result\').isVisible()',
@@ -124,6 +131,12 @@ ruleTester.run('no-cached-api-wait', rule, {
     // 1.3 — No method anywhere (implicit GET default) still flags
     {
       code: 'await waitForApiResponse(\'/api/users\')',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait' }]
+    },
+    // 1.3 — Computed string-literal `method` key with a GET literal still flags
+    {
+      code: 'await waitForApiResponse({ [\'method\']: \'GET\', url: \'/api\' })',
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait' }]
     },
