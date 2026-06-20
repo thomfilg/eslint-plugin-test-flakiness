@@ -93,6 +93,20 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js'
     },
 
+    // 1.3 — Implicit-GET waits honor flagMethods: when GET is excluded, neither
+    // an opaque predicate matcher nor an inline options object without `method`
+    // is flagged.
+    {
+      code: 'await waitForResponse(resp => resp.url().includes(\'/api\'))',
+      filename: 'users.test.js',
+      options: [{ flagMethods: ['POST'] }]
+    },
+    {
+      code: 'await waitForApiResponse({ url: \'/api\' })',
+      filename: 'users.test.js',
+      options: [{ flagMethods: ['POST'] }]
+    },
+
     // 1.4 — Recommended UI-assertion good pattern (no API wait at all)
     {
       code: 'await page.getByTestId(\'submit\').click(); await page.getByTestId(\'result\').isVisible()',
