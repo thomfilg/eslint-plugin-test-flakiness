@@ -75,6 +75,12 @@ ruleTester.run('no-fragile-locators', rule, {
     {
       code: spec('let tgt = page.getByText(\'x\'); tgt = page.getByTestId(\'y\'); await tgt.click();'),
       filename: 'login.spec.ts'
+    },
+
+    // 1.5 refinement chain off a stable factory stays allowed.
+    {
+      code: spec('await page.getByTestId(\'row\').first().click()'),
+      filename: 'login.spec.ts'
     }
   ],
   invalid: [
@@ -140,6 +146,30 @@ ruleTester.run('no-fragile-locators', rule, {
     // locator before the action resolves to the latest (fragile) write.
     {
       code: spec('let tgt = page.getByTestId(\'y\'); tgt = page.getByText(\'x\'); await tgt.click();'),
+      filename: 'login.spec.ts',
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText' }
+        }
+      ]
+    },
+
+    // 1.5 fragile factory behind .first() refinement is still flagged.
+    {
+      code: spec('await page.getByText(\'x\').first().click()'),
+      filename: 'login.spec.ts',
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText' }
+        }
+      ]
+    },
+
+    // 1.5 fragile factory behind .locator() refinement is still flagged.
+    {
+      code: spec('await page.getByText(\'x\').locator(\'button\').click()'),
       filename: 'login.spec.ts',
       errors: [
         {
