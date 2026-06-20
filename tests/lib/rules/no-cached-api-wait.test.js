@@ -49,6 +49,25 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'flow.test.js'
     },
 
+    // 1.3 — Positional HTTP-method literal arg is treated as explicit method;
+    // mutation literals (POST/PUT/DELETE/PATCH) are not flagged.
+    {
+      code: 'await waitForApiResponse(\'/api/users\', \'POST\')',
+      filename: 'users.test.js'
+    },
+    {
+      code: 'await waitForApiResponse(\'/api/users\', \'PUT\')',
+      filename: 'users.test.js'
+    },
+    {
+      code: 'await waitForApiResponse(\'/api/users\', \'DELETE\')',
+      filename: 'users.test.js'
+    },
+    {
+      code: 'await waitForApiResponse(\'/api/users\', \'PATCH\')',
+      filename: 'users.test.js'
+    },
+
     // 1.4 — Recommended UI-assertion good pattern (no API wait at all)
     {
       code: 'await page.getByTestId(\'submit\').click(); await page.getByTestId(\'result\').isVisible()',
@@ -92,6 +111,19 @@ ruleTester.run('no-cached-api-wait', rule, {
     // 1.3 — Custom helper with NO method property (implicit GET default)
     {
       code: 'await waitForApiResponse({ url: \'/api/users\' })',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait' }]
+    },
+
+    // 1.3 — Positional GET literal arg is treated as explicit flaggable method
+    {
+      code: 'await waitForApiResponse(\'/api/users\', \'GET\')',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait' }]
+    },
+    // 1.3 — No method anywhere (implicit GET default) still flags
+    {
+      code: 'await waitForApiResponse(\'/api/users\')',
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait' }]
     },
