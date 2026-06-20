@@ -81,6 +81,18 @@ ruleTester.run('no-fragile-locators', rule, {
     {
       code: spec('await page.getByTestId(\'row\').first().click()'),
       filename: 'login.spec.ts'
+    },
+
+    // 1.6 getByRole with an opaque (non-literal) options object is not flagged:
+    // the rule cannot prove the absence of a { name } option.
+    {
+      code: spec('await page.getByRole(\'button\', opts).click()'),
+      filename: 'login.spec.ts'
+    },
+    // 1.6 getByRole whose options spread an external object is not flagged.
+    {
+      code: spec('await page.getByRole(\'button\', { ...defaults }).click()'),
+      filename: 'login.spec.ts'
     }
   ],
   invalid: [
