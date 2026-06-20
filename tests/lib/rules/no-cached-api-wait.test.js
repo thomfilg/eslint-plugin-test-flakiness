@@ -200,6 +200,13 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
+    // 1.3 — Default config flags the built-in `waitForResponse` URL-string
+    // matcher form (exercises the `name === 'waitForResponse'` branch).
+    {
+      code: 'await waitForResponse(\'/api/users\')',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
+    },
 
     // 1.4 — Custom helperNames option flags the configured helper name
     {
