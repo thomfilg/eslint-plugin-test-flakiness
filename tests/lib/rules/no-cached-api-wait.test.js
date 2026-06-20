@@ -93,6 +93,19 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js'
     },
 
+    // 1.3 — A mutation literal anywhere wins: an earlier flaggable GET literal
+    // does not hide a later POST in another argument.
+    {
+      code: 'await waitForApiResponse({ method: \'GET\' }, { method: \'POST\' })',
+      filename: 'users.test.js'
+    },
+    // 1.3 — A positional mutation literal is honored even alongside a
+    // non-literal options `method` (which on its own would be skipped).
+    {
+      code: 'await waitForApiResponse({ method: dynamicMethod }, \'POST\')',
+      filename: 'users.test.js'
+    },
+
     // 1.3 — Implicit-GET waits honor flagMethods: when GET is excluded, neither
     // an opaque predicate matcher nor an inline options object without `method`
     // is flagged.
