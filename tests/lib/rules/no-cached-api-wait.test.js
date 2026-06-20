@@ -226,6 +226,18 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
+    // 1.3 — An opaque predicate matcher is flagged even when another argument
+    // carries an indeterminate method (spread-built or non-literal).
+    {
+      code: 'await waitForApiResponse(resp => resp.url().includes(\'/api\'), { ...options })',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
+    },
+    {
+      code: 'await waitForApiResponse({ method: dynamicMethod }, resp => resp.url().includes(\'/api\'))',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
+    },
 
     // 1.4 — Custom helperNames option flags the configured helper name
     {
