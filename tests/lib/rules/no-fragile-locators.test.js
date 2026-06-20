@@ -106,6 +106,12 @@ ruleTester.run('no-fragile-locators', rule, {
     {
       code: spec('const tgt = page.getByTestId(\'x\'); await tgt.first().click();'),
       filename: 'login.spec.ts'
+    },
+
+    // 1.5 aliasing a stable locator (const b = a) keeps it allowed.
+    {
+      code: spec('const a = page.getByTestId(\'x\'); const b = a; await b.click();'),
+      filename: 'login.spec.ts'
     }
   ],
   invalid: [
@@ -233,6 +239,18 @@ ruleTester.run('no-fragile-locators', rule, {
     // refinement on a stored variable must resolve back to getByText.
     {
       code: spec('const tgt = page.getByText(\'x\'); await tgt.first().click();'),
+      filename: 'login.spec.ts',
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
+        }
+      ]
+    },
+
+    // 1.5 aliasing a fragile locator (const b = a) resolves back to getByText.
+    {
+      code: spec('const a = page.getByText(\'x\'); const b = a; await b.click();'),
       filename: 'login.spec.ts',
       errors: [
         {
