@@ -103,7 +103,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByText' }
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -114,7 +114,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'fill', factory: 'getByText' }
+          data: { method: 'fill', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -125,7 +125,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'waitFor', factory: 'getByText' }
+          data: { method: 'waitFor', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -137,7 +137,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByRole' }
+          data: { method: 'click', factory: 'getByRole', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -149,7 +149,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByText' }
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -162,7 +162,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByText' }
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -174,7 +174,7 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByText' }
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
         }
       ]
     },
@@ -186,7 +186,21 @@ ruleTester.run('no-fragile-locators', rule, {
       errors: [
         {
           messageId: 'fragileAction',
-          data: { method: 'click', factory: 'getByText' }
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
+        }
+      ]
+    },
+
+    // 1.6 the suggested stable alternative reflects a custom `stable` option
+    // rather than a hard-coded getByTestId.
+    {
+      code: spec('await page.getByText(\'x\').click()'),
+      filename: 'login.spec.ts',
+      options: [{ stable: ['getByLabel'] }],
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByLabel`' }
         }
       ]
     }
