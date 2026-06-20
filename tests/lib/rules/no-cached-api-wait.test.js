@@ -106,6 +106,13 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js',
       options: [{ flagMethods: ['POST'] }]
     },
+    // 1.3 — The built-in `waitForResponse` URL-string matcher is also an implicit
+    // GET, so it too is suppressed when flagMethods excludes GET.
+    {
+      code: 'await waitForResponse(\'/api/users\')',
+      filename: 'users.test.js',
+      options: [{ flagMethods: ['POST'] }]
+    },
 
     // 1.4 — Recommended UI-assertion good pattern (no API wait at all)
     {
