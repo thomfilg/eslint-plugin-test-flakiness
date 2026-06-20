@@ -20,16 +20,29 @@ The rule only runs on test files (`isTestFile(getFilename(context))`); non-test 
 
 ### What gets flagged
 
-- Bare `page.waitForResponse(...)` / `waitForResponse(...)` calls (the name is in `helperNames`), because the
-  response matcher cannot be narrowed to a non-GET method.
-- A configurable custom helper call whose options object has a `method` literal in `flagMethods` (default `GET`,
-  case-insensitive), **or** has no `method` property at all (implicit GET default).
+- **Opaque response matchers** — any call (for a name in `helperNames`) whose argument is a **predicate
+  function**, e.g. `waitForResponse(resp => resp.url().includes('/api'))`. The matcher has no method filter, so a
+  cache-served GET can satisfy it. This is detected by shape, so it also applies to custom `helperNames`.
+- The built-in `waitForResponse` / `page.waitForResponse` is additionally flagged when called with a **URL string
+  or RegExp** (e.g. `waitForResponse('/api/users')`) — also a matcher with no method filter. (This URL-string form
+  is keyed to the built-in name; see the note under [`helperNames`](#helpernames-default-waitforapiresponse-waitforresponse).)
+- A custom helper call with an **inline options object** whose `method` literal is in `flagMethods` (default
+  `GET`, case-insensitive), **or** that omits `method` entirely (implicit GET default).
+- A custom helper with the HTTP method passed **positionally** as a string literal that is in `flagMethods`
+  (e.g. `waitForApiResponse('/api/users', 'GET')`).
+
+The report message names the matched method (e.g. `GET`, or `HEAD` under a custom `flagMethods`).
 
 ### What does NOT get flagged
 
-- Waits whose `method` literal is a mutation not in `flagMethods` (`POST`/`PUT`/`DELETE`/`PATCH`).
+- Waits whose method is a mutation not in `flagMethods` (`POST`/`PUT`/`DELETE`/`PATCH`), whether the method is in
+  an options object or passed positionally.
 - A non-literal `method` value (variable or template literal) that cannot be statically determined — the rule
   stays conservative and does not flag.
+- A custom helper whose options are **not an inline object literal** — passed via a variable
+  (`waitForApiResponse(opts)`) or as only a URL string (`waitForApiResponse('/api/users')`) — because the method
+  cannot be statically inspected. (The built-in `waitForResponse` is the exception above: a bare URL-string
+  matcher is flagged since it carries no method filter.)
 
 ## Options
 
@@ -71,6 +84,12 @@ await waitForXhr({ url: "/api/users" }); // flagged
 await waitForApiResponse({ url: "/api/users" }); // allowed (not in custom list)
 ```
 
+> **Note — opaque-matcher coupling:** predicate-style matchers (a function argument) are flagged for **any** name
+> in `helperNames`. The extra URL-string matcher form (`waitForResponse('/api/users')`) is keyed specifically to
+> the built-in name `waitForResponse`. If you replace the defaults (e.g. `helperNames: ["awaitResponse"]`), a
+> predicate call like `awaitResponse(resp => …)` is still flagged, but a bare URL-string call
+> `awaitResponse('/api/users')` is treated as a custom helper (no inline options → not flagged).
+
 ## Examples
 
 ### ❌ Incorrect
@@ -98,6 +117,14 @@ await waitForApiResponse({ url: "/api/users", method: "DELETE" });
 
 // Non-literal method that can't be statically determined is left alone
 await waitForApiResponse({ url: "/api/users", method: requestMethod });
+
+// Method passed positionally as a mutation literal is allowed
+await waitForApiResponse("/api/users", "POST");
+
+// Custom helper whose options are not an inline object literal can't be
+// inspected, so the rule stays conservative and does not flag
+await waitForApiResponse(requestOptions);
+await waitForApiResponse("/api/users");
 
 // Assert on the visible UI outcome instead of the cached response
 await page.getByRole("button", { name: "Load users" }).click();

@@ -130,7 +130,8 @@ ruleTester.run('no-cached-api-wait', rule, {
     {
       code: 'await waitForApiResponse({ url: \'/api/users\' })',
       filename: 'users.test.js',
-      errors: [{ messageId: 'cachedApiWait' }]
+      // Message interpolates the matched method (implicit GET here).
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
 
     // 1.3 — Positional GET literal arg is treated as explicit flaggable method
@@ -154,12 +155,22 @@ ruleTester.run('no-cached-api-wait', rule, {
       errors: [{ messageId: 'cachedApiWait' }]
     },
 
-    // 1.4 — Custom flagMethods option flags HEAD (in addition to GET)
+    // 1.4 — Custom flagMethods option flags HEAD (in addition to GET); the
+    // message reflects the matched method rather than a hardcoded "GET".
     {
       code: 'await waitForApiResponse({ method: \'HEAD\', url: \'/api\' })',
       filename: 'flow.test.js',
       options: [{ flagMethods: ['GET', 'HEAD'] }],
-      errors: [{ messageId: 'cachedApiWait' }]
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'HEAD' } }]
+    },
+
+    // 1.4 — Opaque matcher detection is shape-based (predicate arg), so a custom
+    // helper name that replaces the defaults still flags a bare predicate wait.
+    {
+      code: 'await awaitResponse(resp => resp.url().includes(\'/api\'))',
+      filename: 'flow.test.js',
+      options: [{ helperNames: ['awaitResponse'] }],
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     }
   ]
 });
