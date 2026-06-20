@@ -193,6 +193,13 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
+    // 1.3 — A method-looking FIRST argument is the matcher, not a method hint:
+    // `waitForResponse('POST')` is still an unfiltered matcher -> flagged as GET.
+    {
+      code: 'await waitForResponse(\'POST\')',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
+    },
 
     // 1.4 — Custom helperNames option flags the configured helper name
     {
