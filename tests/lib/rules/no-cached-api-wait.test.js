@@ -106,6 +106,19 @@ ruleTester.run('no-cached-api-wait', rule, {
       filename: 'users.test.js'
     },
 
+    // 1.3 — A spread-built options object may carry `method` we can't read
+    // statically, so stay conservative and do NOT flag.
+    {
+      code: 'await waitForApiResponse({ ...options, url: \'/api\' })',
+      filename: 'users.test.js'
+    },
+    // 1.3 — A trailing spread can override an earlier explicit method, so it is
+    // also indeterminate.
+    {
+      code: 'await waitForApiResponse({ method: \'GET\', ...options })',
+      filename: 'users.test.js'
+    },
+
     // 1.3 — Implicit-GET waits honor flagMethods: when GET is excluded, neither
     // an opaque predicate matcher nor an inline options object without `method`
     // is flagged.
@@ -204,6 +217,12 @@ ruleTester.run('no-cached-api-wait', rule, {
     // matcher form (exercises the `name === 'waitForResponse'` branch).
     {
       code: 'await waitForResponse(\'/api/users\')',
+      filename: 'users.test.js',
+      errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
+    },
+    // 1.3 — An explicit GET `method` AFTER a spread provably wins -> flagged.
+    {
+      code: 'await waitForApiResponse({ ...options, method: \'GET\' })',
       filename: 'users.test.js',
       errors: [{ messageId: 'cachedApiWait', data: { method: 'GET' } }]
     },
