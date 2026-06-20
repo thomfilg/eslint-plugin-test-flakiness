@@ -100,6 +100,12 @@ ruleTester.run('no-fragile-locators', rule, {
     {
       code: spec('await page.frameLocator(\'#f\').getByTestId(\'x\').click()'),
       filename: 'login.spec.ts'
+    },
+
+    // 1.5 stored stable locator refined before the action stays allowed.
+    {
+      code: spec('const tgt = page.getByTestId(\'x\'); await tgt.first().click();'),
+      filename: 'login.spec.ts'
     }
   ],
   invalid: [
@@ -214,6 +220,19 @@ ruleTester.run('no-fragile-locators', rule, {
     // 1.5 fragile factory inside a locator() scope is still flagged.
     {
       code: spec('await page.locator(\'.scope\').getByText(\'x\').click()'),
+      filename: 'login.spec.ts',
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText', suggestion: '`getByTestId` or `getByPlaceholder`' }
+        }
+      ]
+    },
+
+    // 1.5 stored fragile locator refined before the action is still flagged: the
+    // refinement on a stored variable must resolve back to getByText.
+    {
+      code: spec('const tgt = page.getByText(\'x\'); await tgt.first().click();'),
       filename: 'login.spec.ts',
       errors: [
         {
