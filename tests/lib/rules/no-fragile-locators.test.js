@@ -68,6 +68,13 @@ ruleTester.run('no-fragile-locators', rule, {
     {
       code: spec('await expect(page.getByRole(\'heading\', { name: \'Settings\' })).toBeVisible()'),
       filename: 'login.spec.ts'
+    },
+
+    // 1.4 reassignment: a let initialised fragile then reassigned to a stable
+    // locator before the action resolves to the latest (stable) write.
+    {
+      code: spec('let tgt = page.getByText(\'x\'); tgt = page.getByTestId(\'y\'); await tgt.click();'),
+      filename: 'login.spec.ts'
     }
   ],
   invalid: [
@@ -120,6 +127,19 @@ ruleTester.run('no-fragile-locators', rule, {
     // 1.4 stored-variable chain: fragile locator stored then driven via an action is flagged.
     {
       code: spec('const tgt = page.getByText(\'x\'); await tgt.click();'),
+      filename: 'login.spec.ts',
+      errors: [
+        {
+          messageId: 'fragileAction',
+          data: { method: 'click', factory: 'getByText' }
+        }
+      ]
+    },
+
+    // 1.4 reassignment: a let initialised stable then reassigned to a fragile
+    // locator before the action resolves to the latest (fragile) write.
+    {
+      code: spec('let tgt = page.getByTestId(\'y\'); tgt = page.getByText(\'x\'); await tgt.click();'),
       filename: 'login.spec.ts',
       errors: [
         {
