@@ -38,4 +38,25 @@ describe('eslint-plugin-test-flakiness', () => {
     expect(recommendedConfig.plugins).toEqual(['test-flakiness']);
     expect(strictConfig.plugins).toEqual(['test-flakiness']);
   });
+
+  describe('no-fragile-locators registration', () => {
+    const RULE_NAME = 'no-fragile-locators';
+    const QUALIFIED = `test-flakiness/${RULE_NAME}`;
+
+    it('auto-registers the rule in plugin.rules', () => {
+      expect(plugin.rules[RULE_NAME]).toBeDefined();
+    });
+
+    it('enables the rule in configs.all', () => {
+      expect(plugin.configs.all.rules[QUALIFIED]).toBe('error');
+    });
+
+    it('is off by default — absent from recommended', () => {
+      expect(plugin.configs.recommended.rules).not.toHaveProperty(QUALIFIED);
+    });
+
+    it('is off by default — absent from strict', () => {
+      expect(plugin.configs.strict.rules).not.toHaveProperty(QUALIFIED);
+    });
+  });
 });
